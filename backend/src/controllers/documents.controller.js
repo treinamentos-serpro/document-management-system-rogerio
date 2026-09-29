@@ -9,6 +9,12 @@ function requireUserId(req, res, next) {
     });
   }
 
+  if (owner.length > 128 || /[\u0000-\u001f\u007f]/.test(owner)) {
+    return res.status(400).json({
+      error: { code: 'USER_ID_INVALID', message: 'O identificador do usuário é inválido.' },
+    });
+  }
+
   req.owner = owner;
   return next();
 }

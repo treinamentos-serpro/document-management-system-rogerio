@@ -24,7 +24,14 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: maxUploadSize, files: 1, fields: 0 },
+  limits: {
+    fileSize: maxUploadSize,
+    files: 1,
+    fields: 0,
+    parts: 2,
+    fieldNameSize: 100,
+    headerPairs: 100,
+  },
 });
 
 const router = require('express').Router();

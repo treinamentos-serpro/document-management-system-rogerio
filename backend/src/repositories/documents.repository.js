@@ -1,6 +1,8 @@
 const fs = require('node:fs/promises');
+const path = require('node:path');
 
 const documents = new Map();
+const storageDirectory = path.resolve(__dirname, '../../storage');
 
 async function create(document) {
   documents.set(document.id, { ...document });
@@ -22,7 +24,22 @@ async function findByOwner(owner) {
     .map((document) => ({ ...document }));
 }
 
+async function getUsageByOwner(owner) {
+  const ownerDocuments = [...documents.values()].filter((document) => document.owner === owner);
+  return {
+    count: ownerDocuments.length,
+    size: ownerDocuments.reduce((total, document) => total + document.size, 0),
+  };
+}
+
+function isStoredPath(filePath) {
+  const relativePath = path.relative(storageDirectory, path.resolve(filePath));
+  return relativePath && !relativePath.startsWith('..') && !path.isAbsolute(relativePath);
+}
+
 async function fileExists(filePath) {
+  if (!isStoredPath(filePath)) return false;
+
   try {
     await fs.access(filePath);
     return true;
@@ -33,7 +50,15 @@ async function fileExists(filePath) {
 }
 
 async function removeFile(filePath) {
+  if (!isStoredPath(filePath)) return;
   await fs.rm(filePath, { force: true });
 }
 
-module.exports = { create, findById, findByOwner, fileExists, removeFile };
+module.exports = {
+  create,
+  findById,
+  findByOwner,
+  getUsageByOwner,
+  fileExists,
+  removeFile,
+};

@@ -1,8 +1,22 @@
 const API_PREFIX = '/api';
 
+export class ApiError extends Error {
+  constructor(message, status, code) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+  }
+}
+
 async function request(path, userId, options = {}) {
+  const normalizedUserId = userId?.trim();
+  if (!normalizedUserId) {
+    throw new ApiError('Informe um identificador de usuário.', 400, 'USER_ID_REQUIRED');
+  }
+
   const headers = new Headers(options.headers);
-  headers.set('X-User-Id', userId.trim());
+  headers.set('X-User-Id', normalizedUserId);
 
   const response = await fetch(`${API_PREFIX}${path}`, {
     ...options,
@@ -11,7 +25,11 @@ async function request(path, userId, options = {}) {
 
   if (!response.ok) {
     const payload = await response.json().catch(() => null);
-    throw new Error(payload?.error?.message || 'Não foi possível concluir a solicitação.');
+    throw new ApiError(
+      payload?.error?.message || 'Não foi possível concluir a solicitação.',
+      response.status,
+      payload?.error?.code || 'REQUEST_FAILED',
+    );
   }
 
   return response;

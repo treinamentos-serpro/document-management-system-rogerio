@@ -1,21 +1,34 @@
 import { useRef, useState } from 'react';
 
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+
 export default function UploadComponent({ disabled, onUpload }) {
   const [selectedFile, setSelectedFile] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [validationError, setValidationError] = useState('');
   const fileInput = useRef(null);
 
   function selectFile(file) {
-    if (file) setSelectedFile(file);
+    if (!file) return;
+    if (file.size > MAX_FILE_SIZE) {
+      setSelectedFile(null);
+      setValidationError('O arquivo excede o limite de 10 MB.');
+      if (fileInput.current) fileInput.current.value = '';
+      return;
+    }
+
+    setValidationError('');
+    setSelectedFile(file);
   }
 
   async function handleSubmit(event) {
     event.preventDefault();
-    if (!selectedFile || disabled) return;
+    if (!selectedFile || disabled || validationError) return;
 
     const uploaded = await onUpload(selectedFile);
     if (uploaded) {
       setSelectedFile(null);
+      setValidationError('');
       if (fileInput.current) fileInput.current.value = '';
     }
   }
@@ -70,6 +83,7 @@ export default function UploadComponent({ disabled, onUpload }) {
           {disabled ? 'Enviando...' : 'Enviar documento'}
         </button>
       </div>
+      {validationError && <p className="message message-error" role="alert">{validationError}</p>}
     </form>
   );
 }

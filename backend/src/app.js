@@ -16,7 +16,8 @@ const documentsRoutes = require('./routes/documents.routes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+app.disable('x-powered-by');
+app.use(express.json({ limit: '64kb' }));
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok' });
